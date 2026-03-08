@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "care_im"
+version = "0.1.0"
+description = "IM Wrapper plugin for CARE — GSoC PoC"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = [
+    "django>=4.2",
+    "requests",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4.0",
+    "pre-commit",
+]
+
+[tool.setuptools.packages.find]
+include = ["care_im*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "A",     # flake8-builtins
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "DJ",    # flake8-django
+    "E",     # pycodestyle errors
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "S",     # flake8-bandit (security)
+    "SIM",   # flake8-simplify
+    "T20",   # flake8-print
+    "UP",    # pyupgrade
+    "W",     # pycodestyle warnings
+    "RUF",   # ruff-specific rules
+]
+ignore = [
+    "S101",  # allow assert in tests
+    "S106",  # allow test tokens in override_settings
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["care_im"]

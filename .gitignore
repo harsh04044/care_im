@@ -1,0 +1,25 @@
+# Env and secrets
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+.ruff_cache/
+
+# Django
+*.sqlite3
+*.log
+db.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
