@@ -1,118 +1,53 @@
 # care_im — IM plugin for CARE
 
-Proof-of-concept plugin that adds instant messaging support to
-[CARE](https://github.com/ohcnetwork/care), mirroring its existing SMS
-backend style. Built as a GSoC 2025 mini-PoC.
+Small PoC that adds IM (WhatsApp etc.) to [CARE](https://github.com/ohcnetwork/care), same idea as its SMS backend. GSoC 2026 mini-PoC.
 
 ## Architecture
 
-```
- WhatsApp / Telegram / …
-        │
-        ▼
- ┌─────────────┐      ┌──────────────┐      ┌──────────────┐
- │  Webhook     │─────▶│  IMBackend   │─────▶│  IMMessage   │
- │  (views.py)  │      │  (whatsapp,  │      │  (message.py)│
- │              │◀─────│   console)   │◀─────│              │
- └─────────────┘      └──────────────┘      └──────────────┘
-        │                                          │
-        ▼                                          ▼
- ┌─────────────┐                           ┌──────────────┐
- │  care_poc.py │                           │  utils.py    │
- │  (CARE bot   │                           │  (send_im_   │
- │   logic)     │                           │   message)   │
- └─────────────┘                           └──────────────┘
-```
+![Architecture](docs/architecture.png)
 
-## Features
+- Two backends: console (dev/tests), WhatsApp Cloud API. Both do `send_message` / `receive_message`.
+- PoC bot uses buttons + list; state is in-memory here — real deployment would use Redis (CARE has it).
+- Drop into any Django project via `INSTALLED_APPS`; recipient is always a single string.
 
-- Backends: `ConsoleIMBackend` (dev/tests), `WhatsAppBackend` (Cloud API)
-- WhatsApp interactive messages (buttons + list) for the PoC flow
-- Send + receive on every backend (`send_message()`, `receive_message()`)
-- 1:1 conversations (recipient is a single string, not a list)
-- Simple conversation state: welcome → category → patient → data (in this PoC, state is in-memory; in production this would use Redis, which CARE already has)
-- Django app: add to `INSTALLED_APPS`
-
-## How this maps to real CARE
-
-This PoC uses mock data and in-memory state to demonstrate the flow. In a real deployment: the mock patient/medication/procedure data would come from CARE's actual `Patient` and related models; the in-memory conversation state would be replaced by Redis (already used in CARE); and the console backend would be swapped for the WhatsApp backend with real Meta credentials.
+**Real CARE:** This repo uses mock data and in-memory state. In production you’d plug in CARE’s Patient (and related) models, Redis for state, and WhatsApp with real creds.
 
 ## Quick Start
 
-### Standalone (demo site)
+**Demo (standalone):**
 
 ```bash
-# Clone and install
 git clone <repo-url> && cd care_im
 pip install -e ".[dev]"
-
-# Set up WhatsApp credentials
-cp .env.example .env   # edit with your Meta API credentials
-
-# Run the demo server
+cp .env.example .env   # fill in Meta API creds if using WhatsApp
 python manage_demo.py runserver
 ```
 
-### As a CARE plugin
+**As a CARE plugin:** add `care_im` to `INSTALLED_APPS`, set `IM_BACKEND` to the WhatsApp backend, add the usual `WHATSAPP_*` settings, and in `urls.py`:
 
 ```python
-# settings.py
-INSTALLED_APPS = [..., "care_im"]
-IM_BACKEND = "care_im.backends.whatsapp.WhatsAppBackend"
-WHATSAPP_PHONE_NUMBER_ID = "your_phone_number_id"
-WHATSAPP_ACCESS_TOKEN = "your_access_token"
-WHATSAPP_VERIFY_TOKEN = "your_verify_token"
+path("im/", include("care_im.urls")),
 ```
 
-```python
-# urls.py
-urlpatterns = [
-    path("im/", include("care_im.urls")),
-]
-```
+**Send a message:** `from care_im.utils import send_im_message` then `send_im_message(content="Hi", recipient="919876543210")`.
 
-### Sending a message programmatically
-
-```python
-from care_im.utils import send_im_message
-
-send_im_message(content="Hello!", recipient="919876543210")
-```
-
-## Running Tests
+## Tests
 
 ```bash
-python -m django test care_im.tests --settings=test_settings -v2
+python manage_demo.py test care_im.tests -v2
 ```
 
-## Code Quality
+Or: `python -m django test care_im.tests --settings=test_settings -v2`
+
+## Lint / format
 
 ```bash
-# Lint
 ruff check care_im/
-
-# Format
 ruff format care_im/
-
-# Pre-commit (install once)
-pre-commit install
 ```
 
-## Project Structure
+`pre-commit install` if you use it.
 
-```
-care_im/
-├── __init__.py              # Package exports
-├── apps.py                  # Django AppConfig
-├── message.py               # IMMessage model
-├── utils.py                 # send_im_message(), get_im_backend()
-├── views.py                 # Webhook endpoints
-├── urls.py                  # URL routing
-├── care_poc.py              # Interactive CARE bot (PoC)
-├── backends/
-│   ├── base.py              # IMBackendBase (abstract)
-│   ├── console.py           # ConsoleIMBackend (dev/test)
-│   └── whatsapp.py          # WhatsAppBackend (Cloud API)
-└── tests/
-    └── test_views.py        # Webhook endpoint tests
-```
+## Project layout
+
+`care_im/` — `message.py`, `utils.py`, `views.py`, `urls.py`, `care_poc.py` (bot + mock data), `backends/` (base, console, whatsapp), `tests/test_views.py`. Demo runner is `manage_demo.py` at repo root.
