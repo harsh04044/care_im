@@ -23,6 +23,8 @@ cp .env.example .env   # fill in Meta API creds if using WhatsApp
 python manage_demo.py runserver
 ```
 
+**Webhook with real WhatsApp:** Meta needs to POST to your server. On localhost use [ngrok](https://ngrok.com/) (or similar): run `ngrok http 8000`, then in the Meta app set the webhook URL to `https://your-ngrok-url.ngrok.io/im/webhook/whatsapp/` and the same `WHATSAPP_VERIFY_TOKEN` as in `.env`.
+
 **As a CARE plugin:** add `care_im` to `INSTALLED_APPS`, set `IM_BACKEND` to the WhatsApp backend, add the usual `WHATSAPP_*` settings, and in `urls.py`:
 
 ```python
